@@ -179,9 +179,12 @@ Additional manual tests were completed using MCP Inspector:
 
 PostgreSQL integration was also tested for creating, updating, and reading application records.
 
-## Future Improvements
+### Security Testing and Improvements
 
-- Add a web dashboard.
-- Add application deadline reminders.
-- Add application statistics and reports.
-- Integrate more AI-powered interview preparation features.
+1. I reviewed my local MCP server to identify potential security risks in tool descriptions and write operations.
+2. I added confirmation checks to the `add_application` and `update_application_status` tools.
+3. I tested that write operations require confirmation and that status updates do not happen without it.
+4. I ran the automated tests, and the tests passed.
+5. This exercise helped me understand the importance of prompt-injection awareness, permission checks, and secure MCP tool design.
+
+**Note:** The confirmation checks were tested locally. A full model-based prompt-injection test is still needed to verify whether a model follows malicious instructions hidden in tool descriptions.
