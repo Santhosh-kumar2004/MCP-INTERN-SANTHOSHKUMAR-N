@@ -50,6 +50,8 @@ def test_add_valid_application():
         result = add_application(
             company_name="Test Company",
             job_role="Python Developer",
+            job_type="Internship",
+            confirm=True,
         )
 
         assert "added successfully" in result.lower()
@@ -84,9 +86,12 @@ def test_add_job_type_case_insensitive():
         db.refresh.side_effect = lambda app: setattr(app, "id", 102)
 
         result = add_application(
-            "Test Company", "Python Developer", "job"
+            company_name="Test Company",
+            job_role="Python Developer",
+            job_type="jOb",
+            confirm=True,
         )
-
+    
         assert "added successfully" in result.lower()
         assert db.add.call_args[0][0].job_type == "Job"
     finally:
@@ -176,7 +181,11 @@ def test_update_valid_status():
         app = sample_application()
         db.query.return_value.filter.return_value.first.return_value = app
 
-        result = update_application_status(101, "Interview")
+        result = update_application_status(
+            application_id=101,
+            new_status="Interview",
+            confirm=True,
+        )
 
         assert "updated successfully" in result.lower()
         assert app.application_status == "Interview"
@@ -258,5 +267,34 @@ def test_prompt_for_missing_application():
         )
 
         assert "could not find" in result.lower()
+    finally:
+        patcher.stop()
+
+
+def test_add_application_requires_confirmation():
+    result = add_application(
+        company_name="Security Test Company",
+        job_role="Python Intern",
+    )
+
+    assert "confirmation required" in result.lower()
+
+def test_update_status_requires_confirmation():
+    db, patcher = mock_database()
+
+    try:
+        app = sample_application(status="Applied")
+
+        db.query.return_value.filter.return_value.first.return_value = app
+
+        result = update_application_status(
+            application_id=101,
+            new_status="Interview",
+        )
+
+        assert "confirmation required" in result.lower()
+        assert app.application_status == "Applied"
+        db.commit.assert_not_called()
+
     finally:
         patcher.stop()

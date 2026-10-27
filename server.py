@@ -12,13 +12,15 @@ def get_project_info() -> str:
 
     return "Job Application Tracker MCP Server is running."
 
+
 @mcp.tool()
 def add_application(
     company_name: str,
     job_role: str,
     job_type: str = "Internship",
+    confirm: bool = False,
 ) -> str:
-    """Add a job or internship application to the database."""
+    """Add an application only after the user confirms the operation."""
 
     company_name = company_name.strip()
     job_role = job_role.strip()
@@ -27,8 +29,14 @@ def add_application(
     if not company_name or not job_role:
         return "Error: Company name and job role are required."
 
-    if job_type.lower() not in ["job", "internship"]:
+    if job_type.casefold() not in ["job", "internship"]:
         return "Error: Job type must be Job or Internship."
+
+    if not confirm:
+        return (
+            "Confirmation required. Ask the user to confirm adding "
+            f"{company_name} - {job_role}. Then retry with confirm=True."
+        )
 
     db: Session = SessionLocal()
 
@@ -143,12 +151,17 @@ def verify_application(
     finally:
         db.close()
 
+
 @mcp.tool()
 def update_application_status(
     application_id: int,
     new_status: str,
+    confirm: bool = False,
 ) -> str:
-    """Update a job application's status using its ID."""
+    """Update one application only after the user confirms the change."""
+
+    if application_id <= 0:
+        return "Error: Application ID must be a positive integer."
 
     allowed_statuses = [
         "Applied",
@@ -180,6 +193,14 @@ def update_application_status(
 
         if application is None:
             return f"Application ID {application_id} not found."
+
+        if not confirm:
+            return (
+                f"Confirmation required to change application "
+                f"{application_id} from {application.application_status} "
+                f"to {matched_status}. Ask the user to confirm, "
+                "then retry with confirm=True."
+            )
 
         application.application_status = matched_status
         db.commit()
